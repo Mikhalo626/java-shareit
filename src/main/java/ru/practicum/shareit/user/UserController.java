@@ -27,9 +27,10 @@ public class UserController {
         );
     }
 
-    @PatchMapping
-    public UserDto updateUser(@RequestHeader("X-Sharer-User-Id") long userId,
-                              @RequestBody User user) {
+    @PatchMapping("/{userId}")
+    public UserDto updateUser(
+            @PathVariable long userId,
+            @RequestBody User user) {
         return userMapper.toUserDto(
                 userService.updateUser(userId, user)
         );
