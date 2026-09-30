@@ -15,6 +15,9 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     Optional<Item> findById(Long id);
 
     @EntityGraph(attributePaths = "owner")
+    Optional<Item> findByIdAndAvailableTrue(Long id);
+
+    @EntityGraph(attributePaths = "owner")
     List<Item> findByOwner_Id(Long ownerId);
 
     @EntityGraph(attributePaths = "owner")

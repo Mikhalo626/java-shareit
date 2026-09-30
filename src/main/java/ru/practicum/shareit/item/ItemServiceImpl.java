@@ -259,6 +259,8 @@ public class ItemServiceImpl implements ItemService {
     }
 
     private CommentDto toCommentDto(Comment comment) {
+        log.info("Формирование ответа для комментария с id {}", comment.getId());
+
         CommentDto commentDto = new CommentDto();
 
         commentDto.setId(comment.getId());

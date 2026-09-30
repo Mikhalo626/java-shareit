@@ -11,45 +11,39 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-
-    @PostMapping
-    public UserDto create(@RequestBody UserDto userDto) {
-        User user = new User();
-        user.setName(userDto.getName());
-        user.setEmail(userDto.getEmail());
-
-        User savedUser = userService.createUser(user);
-
-        return UserMapper.toUserDto(savedUser);
-    }
+    private final UserMapper userMapper;
 
     @GetMapping
-    public List<UserDto> getAll() {
+    public List<UserDto> getAllUsers() {
         return userService.getAllUsers().stream()
-                .map(UserMapper::toUserDto)
+                .map(userMapper::toUserDto)
                 .toList();
     }
 
-    @GetMapping("/{userId}")
-    public UserDto getById(@PathVariable long userId) {
-        User user = userService.getUserById(userId);
-        return UserMapper.toUserDto(user);
+    @PostMapping
+    public UserDto createUser(@RequestBody User user) {
+        return userMapper.toUserDto(
+                userService.createUser(user)
+        );
     }
 
-    @PatchMapping("/{userId}")
-    public UserDto update(@PathVariable long userId,
-                          @RequestBody UserDto userDto) {
-        User user = new User();
-        user.setName(userDto.getName());
-        user.setEmail(userDto.getEmail());
+    @PatchMapping
+    public UserDto updateUser(@RequestHeader("X-Sharer-User-Id") long userId,
+                              @RequestBody User user) {
+        return userMapper.toUserDto(
+                userService.updateUser(userId, user)
+        );
+    }
 
-        User updatedUser = userService.updateUser(userId, user);
-
-        return UserMapper.toUserDto(updatedUser);
+    @GetMapping("/{userId}")
+    public UserDto getUser(@PathVariable long userId) {
+        return userMapper.toUserDto(
+                userService.getUserById(userId)
+        );
     }
 
     @DeleteMapping("/{userId}")
-    public void delete(@PathVariable long userId) {
+    public void deleteUser(@PathVariable long userId) {
         userService.deleteUser(userId);
     }
 }
