@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.item.ItemRepository;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.itemrequest.dto.ItemRequestDto;
 import ru.practicum.shareit.user.UserRepository;
 
@@ -18,6 +21,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     private final ItemRequestRepository itemRequestRepository;
     private final UserRepository userRepository;
+    private final ItemRepository itemRepository;
+    private final ItemMapper itemMapper;
 
     @Override
     public ItemRequestDto createRequest(long userId, ItemRequestDto requestDto) {
@@ -95,7 +100,17 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                         "Запрос не найден"
                 ));
 
-        return toDto(request);
+        ItemRequestDto dto = toDto(request);
+
+        List<ItemDto> items = itemRepository
+                .findAllByRequestIdOrderByIdAsc(requestId)
+                .stream()
+                .map(itemMapper::toItemDto)
+                .toList();
+
+        dto.setItems(items);
+
+        return dto;
     }
 
     private ItemRequestDto toDto(ItemRequest request) {

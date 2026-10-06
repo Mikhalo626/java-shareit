@@ -5,10 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.booking.Booking;
+import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.booking.BookingStatus;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
+import ru.practicum.shareit.comment.CommentMapper;
+import ru.practicum.shareit.comment.CommentRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.UserRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -19,6 +26,9 @@ public class ItemServiceImpl implements ItemService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final ItemMapper itemMapper;
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
+    private final BookingRepository bookingRepository;
 
     @Override
     public ItemDto addNewItem(long userId, ItemDto itemDto) {
@@ -65,7 +75,11 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto updateItem(long userId, long itemId, ItemDto itemDto) {
-        log.info("Обновление вещи с id {} пользователем с id {}", itemId, userId);
+        log.info(
+                "Обновление вещи с id {} пользователем с id {}",
+                itemId,
+                userId
+        );
 
         Item existingItem = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -105,7 +119,38 @@ public class ItemServiceImpl implements ItemService {
                         "Вещь не найдена"
                 ));
 
-        return itemMapper.toItemDto(item);
+        ItemDto dto = itemMapper.toItemDto(item);
+
+        dto.setComments(
+                commentRepository.findAllByItem_IdOrderByCreatedDesc(itemId)
+                        .stream()
+                        .map(commentMapper::toCommentDto)
+                        .toList()
+        );
+
+        LocalDateTime now = LocalDateTime.now();
+
+        bookingRepository
+                .findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
+                        itemId,
+                        BookingStatus.APPROVED,
+                        now
+                )
+                .ifPresent(booking ->
+                        dto.setLastBooking(toBookingShortDto(booking))
+                );
+
+        bookingRepository
+                .findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                        itemId,
+                        BookingStatus.APPROVED,
+                        now
+                )
+                .ifPresent(booking ->
+                        dto.setNextBooking(toBookingShortDto(booking))
+                );
+
+        return dto;
     }
 
     @Override
@@ -128,5 +173,14 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.search(text).stream()
                 .map(itemMapper::toItemDto)
                 .toList();
+    }
+
+    private BookingShortDto toBookingShortDto(Booking booking) {
+        BookingShortDto dto = new BookingShortDto();
+        dto.setId(booking.getId());
+        dto.setBookerId(booking.getBooker().getId());
+        dto.setStart(booking.getStart());
+        dto.setEnd(booking.getEnd());
+        return dto;
     }
 }
