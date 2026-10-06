@@ -31,11 +31,17 @@ public class ItemClient {
                 .body(ItemDto.class);
     }
 
-    public ItemDto getItem(long itemId) {
-        log.info("Запрос вещи с id {} на сервер", itemId);
+    public ItemDto getItem(Long userId, long itemId) {
+        log.info("Запрос вещи с id {} на сервер пользователем с id {}", itemId, userId);
 
-        return restClient.get()
-                .uri("/items/{itemId}", itemId)
+        RestClient.RequestHeadersSpec<?> request = restClient.get()
+                .uri("/items/{itemId}", itemId);
+
+        if (userId != null) {
+            request.header("X-Sharer-User-Id", String.valueOf(userId));
+        }
+
+        return request
                 .retrieve()
                 .body(ItemDto.class);
     }

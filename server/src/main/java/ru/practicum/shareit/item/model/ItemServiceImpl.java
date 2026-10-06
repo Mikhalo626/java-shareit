@@ -110,7 +110,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getItem(long itemId) {
+    public ItemDto getItem(Long userId, long itemId) {
         log.info("Получение вещи с id {}", itemId);
 
         Item item = itemRepository.findById(itemId)
@@ -128,27 +128,29 @@ public class ItemServiceImpl implements ItemService {
                         .toList()
         );
 
-        LocalDateTime now = LocalDateTime.now();
+        if (userId != null && item.getOwnerId().equals(userId)) {
+            LocalDateTime now = LocalDateTime.now();
 
-        bookingRepository
-                .findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
-                        itemId,
-                        BookingStatus.APPROVED,
-                        now
-                )
-                .ifPresent(booking ->
-                        dto.setLastBooking(toBookingShortDto(booking))
-                );
+            bookingRepository
+                    .findFirstByItem_IdAndStatusAndEndBeforeOrderByEndDesc(
+                            itemId,
+                            BookingStatus.APPROVED,
+                            now
+                    )
+                    .ifPresent(booking ->
+                            dto.setLastBooking(toBookingShortDto(booking))
+                    );
 
-        bookingRepository
-                .findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
-                        itemId,
-                        BookingStatus.APPROVED,
-                        now
-                )
-                .ifPresent(booking ->
-                        dto.setNextBooking(toBookingShortDto(booking))
-                );
+            bookingRepository
+                    .findFirstByItem_IdAndStatusAndStartAfterOrderByStartAsc(
+                            itemId,
+                            BookingStatus.APPROVED,
+                            now
+                    )
+                    .ifPresent(booking ->
+                            dto.setNextBooking(toBookingShortDto(booking))
+                    );
+        }
 
         return dto;
     }

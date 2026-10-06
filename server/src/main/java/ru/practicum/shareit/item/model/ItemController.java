@@ -3,6 +3,7 @@ package ru.practicum.shareit.item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.ItemDto;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import java.util.List;
 
@@ -29,8 +30,10 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItem(@PathVariable long itemId) {
-        return itemService.getItem(itemId);
+    public ItemDto getItem(
+            @RequestHeader(value = "X-Sharer-User-Id", required = false) Long userId,
+            @PathVariable long itemId) {
+        return itemService.getItem(userId, itemId);
     }
 
     @GetMapping
