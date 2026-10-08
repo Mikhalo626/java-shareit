@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import jakarta.validation.Valid;
 import ru.practicum.shareit.item.dto.ItemDto;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,7 +24,7 @@ public class ItemController {
     @PostMapping
     public ItemDto addItem(
             @RequestHeader("X-Sharer-User-Id") long userId,
-            @RequestBody ItemDto itemDto) {
+            @Valid @RequestBody ItemDto itemDto) {
         return itemClient.addItem(userId, itemDto);
     }
 
@@ -44,7 +45,7 @@ public class ItemController {
     public ItemDto updateItem(
             @RequestHeader("X-Sharer-User-Id") long userId,
             @PathVariable long itemId,
-            @RequestBody ItemDto itemDto) {
+            @Valid @RequestBody ItemDto itemDto) {
         return itemClient.updateItem(userId, itemId, itemDto);
     }
 

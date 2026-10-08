@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -30,14 +31,14 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDto createUser(@RequestBody UserDto userDto) {
+    public UserDto createUser(@Valid @RequestBody UserDto userDto) {
         return userClient.createUser(userDto);
     }
 
     @PatchMapping("/{userId}")
     public UserDto updateUser(
             @PathVariable long userId,
-            @RequestBody UserDto userDto) {
+            @Valid @RequestBody UserDto userDto) {
         return userClient.updateUser(userId, userDto);
     }
 

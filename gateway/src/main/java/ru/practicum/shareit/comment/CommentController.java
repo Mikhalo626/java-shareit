@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.comment.dto.CommentDto;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class CommentController {
     public CommentDto addComment(
             @RequestHeader("X-Sharer-User-Id") long userId,
             @PathVariable long itemId,
-            @RequestBody CommentDto commentDto) {
+            @Valid @RequestBody CommentDto commentDto) {
         return commentClient.addComment(userId, itemId, commentDto);
     }
 

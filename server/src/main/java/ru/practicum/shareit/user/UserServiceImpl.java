@@ -13,8 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private static final String EMAIL_REGEX = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
-
     private final UserRepository userRepository;
 
     @Override
@@ -39,8 +37,6 @@ public class UserServiceImpl implements UserService {
     public User createUser(User user) {
         log.info("Создание нового пользователя с email {}", user.getEmail());
 
-        validateEmail(user.getEmail());
-
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -62,8 +58,6 @@ public class UserServiceImpl implements UserService {
         }
 
         if (user.getEmail() != null) {
-            validateEmail(user.getEmail());
-
             if (!user.getEmail().equals(existingUser.getEmail())
                     && userRepository.existsByEmail(user.getEmail())) {
                 throw new ResponseStatusException(
@@ -84,14 +78,5 @@ public class UserServiceImpl implements UserService {
 
         getUserById(userId);
         userRepository.deleteById(userId);
-    }
-
-    private void validateEmail(String email) {
-        if (email == null || !email.matches(EMAIL_REGEX)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Некорректный email"
-            );
-        }
     }
 }

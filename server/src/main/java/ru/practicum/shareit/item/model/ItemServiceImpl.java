@@ -41,27 +41,6 @@ public class ItemServiceImpl implements ItemService {
             );
         }
 
-        if (itemDto.getName() == null || itemDto.getName().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Название вещи обязательно"
-            );
-        }
-
-        if (itemDto.getDescription() == null || itemDto.getDescription().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Описание вещи обязательно"
-            );
-        }
-
-        if (itemDto.getAvailable() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Поле available обязательно"
-            );
-        }
-
         Item item = Item.builder()
                 .name(itemDto.getName())
                 .description(itemDto.getDescription())

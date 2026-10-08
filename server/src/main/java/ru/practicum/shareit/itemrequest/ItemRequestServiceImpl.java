@@ -5,14 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.ItemRepository;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.ItemMapper;
+import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.itemrequest.dto.ItemRequestDto;
 import ru.practicum.shareit.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -35,14 +38,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             );
         }
 
-        if (requestDto.getDescription() == null
-                || requestDto.getDescription().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Описание запроса обязательно"
-            );
-        }
-
         ItemRequest request = new ItemRequest();
         request.setDescription(requestDto.getDescription());
         request.setRequesterId(userId);
@@ -55,6 +50,8 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestDto> getUserRequests(long userId) {
+        log.info("Получение запросов пользователя с id {}", userId);
+
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -62,15 +59,16 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             );
         }
 
-        return itemRequestRepository
-                .findAllByRequesterIdOrderByCreatedDesc(userId)
-                .stream()
-                .map(this::toDto)
-                .toList();
+        List<ItemRequest> requests = itemRequestRepository
+                .findAllByRequesterIdOrderByCreatedDesc(userId);
+
+        return toDtosWithItems(requests);
     }
 
     @Override
     public List<ItemRequestDto> getAllRequests(long userId) {
+        log.info("Получение запросов других пользователей для пользователя с id {}", userId);
+
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -78,15 +76,20 @@ public class ItemRequestServiceImpl implements ItemRequestService {
             );
         }
 
-        return itemRequestRepository
-                .findAllByRequesterIdNotOrderByCreatedDesc(userId)
-                .stream()
-                .map(this::toDto)
-                .toList();
+        List<ItemRequest> requests = itemRequestRepository
+                .findAllByRequesterIdNotOrderByCreatedDesc(userId);
+
+        return toDtosWithItems(requests);
     }
 
     @Override
     public ItemRequestDto getRequest(long userId, long requestId) {
+        log.info(
+                "Получение запроса с id {} пользователем с id {}",
+                requestId,
+                userId
+        );
+
         if (!userRepository.existsById(userId)) {
             throw new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
@@ -111,6 +114,41 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         dto.setItems(items);
 
         return dto;
+    }
+
+    private List<ItemRequestDto> toDtosWithItems(List<ItemRequest> requests) {
+        if (requests.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> requestIds = requests.stream()
+                .map(ItemRequest::getId)
+                .toList();
+
+        List<Item> items = itemRepository
+                .findAllByRequestIdInOrderByRequestIdAscIdAsc(requestIds);
+
+        Map<Long, List<ItemDto>> itemsByRequestId = items.stream()
+                .collect(Collectors.groupingBy(
+                        Item::getRequestId,
+                        Collectors.mapping(
+                                itemMapper::toItemDto,
+                                Collectors.toList()
+                        )
+                ));
+
+        return requests.stream()
+                .map(request -> {
+                    ItemRequestDto dto = toDto(request);
+                    dto.setItems(
+                            itemsByRequestId.getOrDefault(
+                                    request.getId(),
+                                    List.of()
+                            )
+                    );
+                    return dto;
+                })
+                .toList();
     }
 
     private ItemRequestDto toDto(ItemRequest request) {

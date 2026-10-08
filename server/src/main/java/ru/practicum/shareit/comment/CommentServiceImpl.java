@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.shareit.booking.BookingStatus;
 import ru.practicum.shareit.booking.BookingRepository;
@@ -28,6 +29,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
 
     @Override
+    @Transactional
     public CommentDto addComment(
             long userId,
             long itemId,
@@ -50,14 +52,6 @@ public class CommentServiceImpl implements CommentService {
                         HttpStatus.NOT_FOUND,
                         "Вещь не найдена"
                 ));
-
-        if (commentDto.getText() == null
-                || commentDto.getText().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Текст комментария не может быть пустым"
-            );
-        }
 
         boolean completedBooking =
                 bookingRepository.existsByItem_IdAndBooker_IdAndStatusAndEndBefore(
@@ -86,6 +80,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CommentDto> getComments(long itemId) {
 
         log.info("Получение комментариев для вещи {}", itemId);
