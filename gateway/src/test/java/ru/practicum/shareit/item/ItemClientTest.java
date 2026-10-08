@@ -184,4 +184,41 @@ class ItemClientTest {
         item.setOwnerId(1L);
         return item;
     }
+
+    @Test
+    void constructor_shouldCreateClient() {
+        ItemClient client = new ItemClient("http://localhost:9090");
+
+        assertThat(client).isNotNull();
+    }
+
+    @Test
+    void getItems_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(requestTo("http://localhost:9090/items"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header("X-Sharer-User-Id", "1"))
+                .andRespond(withSuccess());
+
+        List<ItemDto> result = itemClient.getItems(1L);
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
+
+    @Test
+    void searchItems_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(requestTo(
+                        "http://localhost:9090/items/search?text=drill"
+                ))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("text", "drill"))
+                .andRespond(withSuccess());
+
+        List<ItemDto> result = itemClient.searchItems("drill");
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
 }

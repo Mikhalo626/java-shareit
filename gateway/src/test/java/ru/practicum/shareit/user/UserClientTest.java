@@ -153,4 +153,37 @@ class UserClientTest {
         user.setEmail("mihail@example.com");
         return user;
     }
+
+    @Test
+    void constructor_shouldCreateClient() {
+        UserClient userClient = new UserClient("http://localhost:9090");
+
+        assertThat(userClient).isNotNull();
+    }
+
+    @Test
+    void getAllUsers_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(requestTo("http://localhost:9090/users"))
+                .andExpect(method(GET))
+                .andRespond(withSuccess());
+
+        List<UserDto> result = client.getAllUsers();
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
+
+    @Test
+    void getUserById_shouldThrowBadGatewayForServerError() {
+        server.expect(requestTo("http://localhost:9090/users/500"))
+                .andExpect(method(GET))
+                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        assertThatThrownBy(() -> client.getUserById(500))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Ошибка при обращении к серверу");
+
+        server.verify();
+    }
 }

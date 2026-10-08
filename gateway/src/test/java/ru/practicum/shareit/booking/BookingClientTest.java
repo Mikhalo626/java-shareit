@@ -206,4 +206,60 @@ class BookingClientTest {
 
         server.verify();
     }
+
+    @Test
+    void constructor_shouldCreateClient() {
+        BookingClient client =
+                new BookingClient("http://localhost:9090");
+
+        assertThat(client).isNotNull();
+    }
+
+    @Test
+    void getUserBookings_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(
+                        requestTo(
+                                "http://localhost:9090/bookings"
+                                        + "?state=ALL"
+                        )
+                )
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("state", "ALL"))
+                .andExpect(header("X-Sharer-User-Id", "1"))
+                .andRespond(withSuccess());
+
+        List<BookingResponseDto> result =
+                bookingClient.getUserBookings(
+                        1L,
+                        BookingQueryState.ALL
+                );
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
+
+    @Test
+    void getOwnerBookings_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(
+                        requestTo(
+                                "http://localhost:9090/bookings/owner"
+                                        + "?state=ALL"
+                        )
+                )
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(queryParam("state", "ALL"))
+                .andExpect(header("X-Sharer-User-Id", "1"))
+                .andRespond(withSuccess());
+
+        List<BookingResponseDto> result =
+                bookingClient.getOwnerBookings(
+                        1L,
+                        BookingQueryState.ALL
+                );
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
 }

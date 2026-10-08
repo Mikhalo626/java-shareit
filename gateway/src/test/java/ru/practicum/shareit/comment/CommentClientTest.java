@@ -88,4 +88,29 @@ class CommentClientTest {
 
         server.verify();
     }
+
+    @Test
+    void constructor_shouldCreateClient() {
+        CommentClient client =
+                new CommentClient("http://localhost:9090");
+
+        assertThat(client).isNotNull();
+    }
+
+    @Test
+    void getComments_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(
+                        requestTo(
+                                "http://localhost:9090/items/10/comment"
+                        )
+                )
+                .andExpect(method(GET))
+                .andRespond(withSuccess());
+
+        List<CommentDto> result = client.getComments(10);
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
 }

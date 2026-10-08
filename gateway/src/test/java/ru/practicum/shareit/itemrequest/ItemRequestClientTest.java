@@ -151,4 +151,42 @@ class ItemRequestClientTest {
         dto.setRequesterId(requesterId);
         return dto;
     }
+
+    @Test
+    void constructor_shouldCreateClient() {
+        ItemRequestClient client =
+                new ItemRequestClient("http://localhost:9090");
+
+        assertThat(client).isNotNull();
+    }
+
+    @Test
+    void getUserRequests_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(requestTo("http://localhost:9090/requests"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header("X-Sharer-User-Id", "1"))
+                .andRespond(withSuccess());
+
+        List<ItemRequestDto> result =
+                itemRequestClient.getUserRequests(1L);
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
+
+    @Test
+    void getAllRequests_shouldReturnEmptyListWhenResponseIsNull() {
+        server.expect(requestTo("http://localhost:9090/requests/all"))
+                .andExpect(method(HttpMethod.GET))
+                .andExpect(header("X-Sharer-User-Id", "1"))
+                .andRespond(withSuccess());
+
+        List<ItemRequestDto> result =
+                itemRequestClient.getAllRequests(1L);
+
+        assertThat(result).isEmpty();
+
+        server.verify();
+    }
 }
