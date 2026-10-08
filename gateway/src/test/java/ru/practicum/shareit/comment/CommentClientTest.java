@@ -1,5 +1,7 @@
 package ru.practicum.shareit.comment;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -7,7 +9,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import ru.practicum.shareit.comment.dto.CommentDto;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -21,6 +23,7 @@ class CommentClientTest {
 
     private MockRestServiceServer server;
     private CommentClient client;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -29,23 +32,24 @@ class CommentClientTest {
 
         server = MockRestServiceServer.bindTo(builder).build();
         client = new CommentClient(builder.build());
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void addComment_shouldSendRequestAndReturnComment() {
-        String response = """
-                {
-                  "id": 1,
-                  "text": "Хорошая вещь",
-                  "authorName": "Михаил",
-                  "created": "2026-10-08T20:00:00"
-                }
-                """;
+    void addComment_shouldSendRequestAndReturnComment()
+            throws JsonProcessingException {
+        CommentDto responseDto = new CommentDto();
+        responseDto.setId(1L);
+        responseDto.setText("Хорошая вещь");
+        responseDto.setAuthorName("Михаил");
 
         server.expect(requestTo("http://localhost:9090/items/10/comment"))
                 .andExpect(method(POST))
                 .andExpect(header("X-Sharer-User-Id", "1"))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(responseDto),
+                        MediaType.APPLICATION_JSON
+                ));
 
         CommentDto request = new CommentDto();
         request.setText("Хорошая вещь");
@@ -54,29 +58,34 @@ class CommentClientTest {
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getText()).isEqualTo("Хорошая вещь");
+
+        server.verify();
     }
 
     @Test
-    void getComments_shouldSendRequestAndReturnComments() {
-        String response = """
-                [
-                  {
-                    "id": 1,
-                    "text": "Хорошая вещь",
-                    "authorName": "Михаил",
-                    "created": "2026-10-08T20:00:00"
-                  }
-                ]
-                """;
+    void getComments_shouldSendRequestAndReturnComments()
+            throws JsonProcessingException {
+        CommentDto responseDto = new CommentDto();
+        responseDto.setId(1L);
+        responseDto.setText("Хорошая вещь");
+        responseDto.setAuthorName("Михаил");
 
         server.expect(requestTo("http://localhost:9090/items/10/comment"))
                 .andExpect(method(GET))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(
+                                List.of(responseDto)
+                        ),
+                        MediaType.APPLICATION_JSON
+                ));
 
         var result = client.getComments(10);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo(1L);
-        assertThat(result.getFirst().getText()).isEqualTo("Хорошая вещь");
+        assertThat(result.getFirst().getText())
+                .isEqualTo("Хорошая вещь");
+
+        server.verify();
     }
 }

@@ -1,5 +1,7 @@
 package ru.practicum.shareit.item;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -21,6 +23,7 @@ class ItemClientTest {
 
     private MockRestServiceServer server;
     private ItemClient itemClient;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -29,30 +32,23 @@ class ItemClientTest {
 
         server = MockRestServiceServer.bindTo(builder).build();
         itemClient = new ItemClient(builder.build());
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void addItem_shouldSendPostRequest() {
+    void addItem_shouldSendPostRequest()
+            throws JsonProcessingException {
+        ItemDto responseDto = createItem(10L, "Drill");
+
         server.expect(requestTo("http://localhost:9090/items"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "name": "Drill",
-                          "description": "Power drill",
-                          "available": true,
-                          "ownerId": 1
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
-        ItemDto item = new ItemDto();
-        item.setName("Drill");
-        item.setDescription("Power drill");
-        item.setAvailable(true);
+        ItemDto item = createItem(null, "Drill");
 
         ItemDto result = itemClient.addItem(1L, item);
 
@@ -63,20 +59,15 @@ class ItemClientTest {
     }
 
     @Test
-    void getItem_shouldSendUserHeader() {
+    void getItem_shouldSendUserHeader()
+            throws JsonProcessingException {
+        ItemDto responseDto = createItem(10L, "Drill");
+
         server.expect(requestTo("http://localhost:9090/items/10"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "name": "Drill",
-                          "description": "Power drill",
-                          "available": true,
-                          "ownerId": 1
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -89,19 +80,14 @@ class ItemClientTest {
     }
 
     @Test
-    void getItem_shouldWorkWithoutUserHeader() {
+    void getItem_shouldWorkWithoutUserHeader()
+            throws JsonProcessingException {
+        ItemDto responseDto = createItem(10L, "Drill");
+
         server.expect(requestTo("http://localhost:9090/items/10"))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "name": "Drill",
-                          "description": "Power drill",
-                          "available": true,
-                          "ownerId": 1
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -113,29 +99,18 @@ class ItemClientTest {
     }
 
     @Test
-    void getItems_shouldReturnItems() {
+    void getItems_shouldReturnItems()
+            throws JsonProcessingException {
+        List<ItemDto> response = List.of(
+                createItem(10L, "Drill"),
+                createItem(11L, "Saw")
+        );
+
         server.expect(requestTo("http://localhost:9090/items"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 10,
-                            "name": "Drill",
-                            "description": "Power drill",
-                            "available": true,
-                            "ownerId": 1
-                          },
-                          {
-                            "id": 11,
-                            "name": "Saw",
-                            "description": "Hand saw",
-                            "available": true,
-                            "ownerId": 1
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(response),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -150,29 +125,22 @@ class ItemClientTest {
     }
 
     @Test
-    void updateItem_shouldSendPatchRequest() {
+    void updateItem_shouldSendPatchRequest()
+            throws JsonProcessingException {
+        ItemDto responseDto = createItem(10L, "Updated drill");
+
         server.expect(requestTo("http://localhost:9090/items/10"))
                 .andExpect(method(HttpMethod.PATCH))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "name": "Updated drill",
-                          "description": "Power drill",
-                          "available": true,
-                          "ownerId": 1
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
-        ItemDto item = new ItemDto();
-        item.setName("Updated drill");
-        item.setDescription("Power drill");
-        item.setAvailable(true);
+        ItemDto item = createItem(null, "Updated drill");
 
-        ItemDto result = itemClient.updateItem(1L, 10L, item);
+        ItemDto result =
+                itemClient.updateItem(1L, 10L, item);
 
         assertThat(result.getName()).isEqualTo("Updated drill");
 
@@ -180,24 +148,19 @@ class ItemClientTest {
     }
 
     @Test
-    void searchItems_shouldSendSearchRequest() {
+    void searchItems_shouldSendSearchRequest()
+            throws JsonProcessingException {
+        ItemDto responseDto = createItem(10L, "Drill");
+
         server.expect(requestTo(
                         "http://localhost:9090/items/search?text=drill"
                 ))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(queryParam("text", "drill"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 10,
-                            "name": "Drill",
-                            "description": "Power drill",
-                            "available": true,
-                            "ownerId": 1
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(
+                                List.of(responseDto)
+                        ),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -210,5 +173,15 @@ class ItemClientTest {
                 .isEqualTo("Drill");
 
         server.verify();
+    }
+
+    private ItemDto createItem(Long id, String name) {
+        ItemDto item = new ItemDto();
+        item.setId(id);
+        item.setName(name);
+        item.setDescription("Power drill");
+        item.setAvailable(true);
+        item.setOwnerId(1L);
+        return item;
     }
 }

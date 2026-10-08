@@ -1,5 +1,7 @@
 package ru.practicum.shareit.booking;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -23,6 +25,7 @@ class BookingClientTest {
 
     private MockRestServiceServer server;
     private BookingClient bookingClient;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -31,20 +34,21 @@ class BookingClientTest {
 
         server = MockRestServiceServer.bindTo(builder).build();
         bookingClient = new BookingClient(builder.build());
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void createBooking_shouldSendPostRequest() {
+    void createBooking_shouldSendPostRequest()
+            throws JsonProcessingException {
+        BookingResponseDto responseDto = new BookingResponseDto();
+        responseDto.setId(10L);
+        responseDto.setStatus(BookingStatus.WAITING);
+
         server.expect(requestTo("http://localhost:9090/bookings"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "status": "WAITING"
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -67,7 +71,12 @@ class BookingClientTest {
     }
 
     @Test
-    void approveBooking_shouldSendPatchRequest() {
+    void approveBooking_shouldSendPatchRequest()
+            throws JsonProcessingException {
+        BookingResponseDto responseDto = new BookingResponseDto();
+        responseDto.setId(10L);
+        responseDto.setStatus(BookingStatus.APPROVED);
+
         server.expect(
                         requestTo(
                                 "http://localhost:9090/bookings/10"
@@ -78,12 +87,7 @@ class BookingClientTest {
                 .andExpect(queryParam("approved", "true"))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "status": "APPROVED"
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -98,19 +102,19 @@ class BookingClientTest {
     }
 
     @Test
-    void getBooking_shouldSendGetRequest() {
+    void getBooking_shouldSendGetRequest()
+            throws JsonProcessingException {
+        BookingResponseDto responseDto = new BookingResponseDto();
+        responseDto.setId(10L);
+        responseDto.setStatus(BookingStatus.APPROVED);
+
         server.expect(
                         requestTo("http://localhost:9090/bookings/10")
                 )
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "status": "APPROVED"
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -125,7 +129,18 @@ class BookingClientTest {
     }
 
     @Test
-    void getUserBookings_shouldReturnBookings() {
+    void getUserBookings_shouldReturnBookings()
+            throws JsonProcessingException {
+        BookingResponseDto first = new BookingResponseDto();
+        first.setId(10L);
+        first.setStatus(BookingStatus.APPROVED);
+
+        BookingResponseDto second = new BookingResponseDto();
+        second.setId(11L);
+        second.setStatus(BookingStatus.WAITING);
+
+        List<BookingResponseDto> response = List.of(first, second);
+
         server.expect(
                         requestTo(
                                 "http://localhost:9090/bookings"
@@ -136,18 +151,7 @@ class BookingClientTest {
                 .andExpect(queryParam("state", "ALL"))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 10,
-                            "status": "APPROVED"
-                          },
-                          {
-                            "id": 11,
-                            "status": "WAITING"
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(response),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -166,7 +170,12 @@ class BookingClientTest {
     }
 
     @Test
-    void getOwnerBookings_shouldReturnBookings() {
+    void getOwnerBookings_shouldReturnBookings()
+            throws JsonProcessingException {
+        BookingResponseDto responseDto = new BookingResponseDto();
+        responseDto.setId(20L);
+        responseDto.setStatus(BookingStatus.APPROVED);
+
         server.expect(
                         requestTo(
                                 "http://localhost:9090/bookings/owner"
@@ -177,14 +186,9 @@ class BookingClientTest {
                 .andExpect(queryParam("state", "ALL"))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 20,
-                            "status": "APPROVED"
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(
+                                List.of(responseDto)
+                        ),
                         MediaType.APPLICATION_JSON
                 ));
 

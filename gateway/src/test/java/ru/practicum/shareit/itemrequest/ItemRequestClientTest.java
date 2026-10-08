@@ -1,5 +1,7 @@
 package ru.practicum.shareit.itemrequest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -20,6 +22,7 @@ class ItemRequestClientTest {
 
     private MockRestServiceServer server;
     private ItemRequestClient itemRequestClient;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -28,26 +31,25 @@ class ItemRequestClientTest {
 
         server = MockRestServiceServer.bindTo(builder).build();
         itemRequestClient = new ItemRequestClient(builder.build());
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void createRequest_shouldSendPostRequest() {
+    void createRequest_shouldSendPostRequest()
+            throws JsonProcessingException {
+        ItemRequestDto responseDto =
+                createRequestDto(10L, "Need a drill", 1L);
+
         server.expect(requestTo("http://localhost:9090/requests"))
                 .andExpect(method(HttpMethod.POST))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "description": "Need a drill",
-                          "requesterId": 1
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
-        ItemRequestDto requestDto = new ItemRequestDto();
-        requestDto.setDescription("Need a drill");
+        ItemRequestDto requestDto =
+                createRequestDto(null, "Need a drill", null);
 
         ItemRequestDto result =
                 itemRequestClient.createRequest(1L, requestDto);
@@ -61,25 +63,18 @@ class ItemRequestClientTest {
     }
 
     @Test
-    void getUserRequests_shouldReturnRequests() {
+    void getUserRequests_shouldReturnRequests()
+            throws JsonProcessingException {
+        List<ItemRequestDto> response = List.of(
+                createRequestDto(10L, "Need a drill", 1L),
+                createRequestDto(11L, "Need a saw", 1L)
+        );
+
         server.expect(requestTo("http://localhost:9090/requests"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 10,
-                            "description": "Need a drill",
-                            "requesterId": 1
-                          },
-                          {
-                            "id": 11,
-                            "description": "Need a saw",
-                            "requesterId": 1
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(response),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -95,25 +90,18 @@ class ItemRequestClientTest {
     }
 
     @Test
-    void getAllRequests_shouldReturnRequests() {
+    void getAllRequests_shouldReturnRequests()
+            throws JsonProcessingException {
+        List<ItemRequestDto> response = List.of(
+                createRequestDto(20L, "Need a camera", 2L),
+                createRequestDto(21L, "Need a tent", 3L)
+        );
+
         server.expect(requestTo("http://localhost:9090/requests/all"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        [
-                          {
-                            "id": 20,
-                            "description": "Need a camera",
-                            "requesterId": 2
-                          },
-                          {
-                            "id": 21,
-                            "description": "Need a tent",
-                            "requesterId": 3
-                          }
-                        ]
-                        """,
+                        objectMapper.writeValueAsString(response),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -129,18 +117,16 @@ class ItemRequestClientTest {
     }
 
     @Test
-    void getRequest_shouldReturnRequest() {
+    void getRequest_shouldReturnRequest()
+            throws JsonProcessingException {
+        ItemRequestDto responseDto =
+                createRequestDto(10L, "Need a drill", 2L);
+
         server.expect(requestTo("http://localhost:9090/requests/10"))
                 .andExpect(method(HttpMethod.GET))
                 .andExpect(header("X-Sharer-User-Id", "1"))
                 .andRespond(withSuccess(
-                        """
-                        {
-                          "id": 10,
-                          "description": "Need a drill",
-                          "requesterId": 2
-                        }
-                        """,
+                        objectMapper.writeValueAsString(responseDto),
                         MediaType.APPLICATION_JSON
                 ));
 
@@ -153,5 +139,16 @@ class ItemRequestClientTest {
         assertThat(result.getRequesterId()).isEqualTo(2L);
 
         server.verify();
+    }
+
+    private ItemRequestDto createRequestDto(
+            Long id,
+            String description,
+            Long requesterId) {
+        ItemRequestDto dto = new ItemRequestDto();
+        dto.setId(id);
+        dto.setDescription(description);
+        dto.setRequesterId(requesterId);
+        return dto;
     }
 }

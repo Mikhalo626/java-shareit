@@ -1,14 +1,19 @@
 package ru.practicum.shareit.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withNoContent;
@@ -18,13 +23,12 @@ import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.PATCH;
 import static org.springframework.http.HttpMethod.POST;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 class UserClientTest {
 
     private MockRestServiceServer server;
     private UserClient client;
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -33,27 +37,27 @@ class UserClientTest {
 
         server = MockRestServiceServer.bindTo(builder).build();
         client = new UserClient(builder.build());
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    void getUserById_shouldReturnUser() {
-        String response = """
-                {
-                  "id": 1,
-                  "name": "Михаил",
-                  "email": "mihail@example.com"
-                }
-                """;
+    void getUserById_shouldReturnUser()
+            throws JsonProcessingException {
+        UserDto responseDto = createUser(1L, "Михаил");
 
         server.expect(requestTo("http://localhost:9090/users/1"))
                 .andExpect(method(GET))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(responseDto),
+                        MediaType.APPLICATION_JSON
+                ));
 
         UserDto result = client.getUserById(1);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getName()).isEqualTo("Михаил");
-        assertThat(result.getEmail()).isEqualTo("mihail@example.com");
+        assertThat(result.getEmail())
+                .isEqualTo("mihail@example.com");
     }
 
     @Test
@@ -68,18 +72,16 @@ class UserClientTest {
     }
 
     @Test
-    void updateUser_shouldSendPatchRequest() {
-        String response = """
-                {
-                  "id": 1,
-                  "name": "Михаил",
-                  "email": "mihail@example.com"
-                }
-                """;
+    void updateUser_shouldSendPatchRequest()
+            throws JsonProcessingException {
+        UserDto responseDto = createUser(1L, "Михаил");
 
         server.expect(requestTo("http://localhost:9090/users/1"))
                 .andExpect(method(PATCH))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(responseDto),
+                        MediaType.APPLICATION_JSON
+                ));
 
         UserDto request = new UserDto();
         request.setName("Михаил");
@@ -102,20 +104,18 @@ class UserClientTest {
     }
 
     @Test
-    void getAllUsers_shouldReturnUsers() {
-        String response = """
-                [
-                  {
-                    "id": 1,
-                    "name": "Михаил",
-                    "email": "mihail@example.com"
-                  }
-                ]
-                """;
+    void getAllUsers_shouldReturnUsers()
+            throws JsonProcessingException {
+        UserDto responseDto = createUser(1L, "Михаил");
 
         server.expect(requestTo("http://localhost:9090/users"))
                 .andExpect(method(GET))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(
+                                List.of(responseDto)
+                        ),
+                        MediaType.APPLICATION_JSON
+                ));
 
         var result = client.getAllUsers();
 
@@ -124,26 +124,33 @@ class UserClientTest {
     }
 
     @Test
-    void createUser_shouldSendPostRequest() {
-        String response = """
-                {
-                  "id": 1,
-                  "name": "Михаил",
-                  "email": "mihail@example.com"
-                }
-                """;
+    void createUser_shouldSendPostRequest()
+            throws JsonProcessingException {
+        UserDto responseDto = createUser(1L, "Михаил");
 
         server.expect(requestTo("http://localhost:9090/users"))
                 .andExpect(method(POST))
-                .andRespond(withSuccess(response, MediaType.APPLICATION_JSON));
+                .andRespond(withSuccess(
+                        objectMapper.writeValueAsString(responseDto),
+                        MediaType.APPLICATION_JSON
+                ));
 
-        UserDto request = new UserDto();
-        request.setName("Михаил");
-        request.setEmail("mihail@example.com");
+        UserDto request = createUser(null, "Михаил");
 
         UserDto result = client.createUser(request);
 
         assertThat(result.getId()).isEqualTo(1L);
-        assertThat(result.getEmail()).isEqualTo("mihail@example.com");
+        assertThat(result.getEmail())
+                .isEqualTo("mihail@example.com");
+
+        server.verify();
+    }
+
+    private UserDto createUser(Long id, String name) {
+        UserDto user = new UserDto();
+        user.setId(id);
+        user.setName(name);
+        user.setEmail("mihail@example.com");
+        return user;
     }
 }
