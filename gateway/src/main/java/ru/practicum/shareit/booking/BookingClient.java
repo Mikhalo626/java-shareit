@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,7 @@ public class BookingClient {
 
     private final RestClient restClient;
 
+    @Autowired
     public BookingClient(@Value("${server.url}") String serverUrl) {
         this(RestClient.builder()
                 .baseUrl(serverUrl)

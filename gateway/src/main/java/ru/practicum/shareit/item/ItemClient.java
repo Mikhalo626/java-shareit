@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ru.practicum.shareit.item.dto.ItemDto;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,7 @@ public class ItemClient {
 
     private final RestClient restClient;
 
+    @Autowired
     public ItemClient(@Value("${server.url}") String serverUrl) {
         this(RestClient.builder()
                 .baseUrl(serverUrl)

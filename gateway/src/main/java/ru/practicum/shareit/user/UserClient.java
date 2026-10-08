@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,7 @@ public class UserClient {
 
     private final RestClient restClient;
 
+    @Autowired
     public UserClient(@Value("${server.url}") String serverUrl) {
         this(RestClient.builder()
                 .baseUrl(serverUrl)

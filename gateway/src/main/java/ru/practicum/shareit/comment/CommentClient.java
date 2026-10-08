@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ru.practicum.shareit.comment.dto.CommentDto;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +16,7 @@ public class CommentClient {
 
     private final RestClient restClient;
 
+    @Autowired
     public CommentClient(@Value("${server.url}") String serverUrl) {
         this(RestClient.builder()
                 .baseUrl(serverUrl)
