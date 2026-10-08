@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.server.ResponseStatusException;
+import ru.practicum.shareit.booking.BookingRepository;
+import ru.practicum.shareit.comment.CommentRepository;
 import ru.practicum.shareit.itemrequest.ItemRequestRepository;
 
 import java.util.List;
@@ -24,8 +26,16 @@ class UserServiceIntegrationTest {
     @Autowired
     private ItemRequestRepository itemRequestRepository;
 
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
     @BeforeEach
     void setUp() {
+        commentRepository.deleteAll();
+        bookingRepository.deleteAll();
         itemRequestRepository.deleteAll();
         userRepository.deleteAll();
     }
