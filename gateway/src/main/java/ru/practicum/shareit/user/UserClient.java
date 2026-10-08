@@ -3,9 +3,9 @@ package ru.practicum.shareit.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,9 +17,13 @@ public class UserClient {
     private final RestClient restClient;
 
     public UserClient(@Value("${server.url}") String serverUrl) {
-        this.restClient = RestClient.builder()
+        this(RestClient.builder()
                 .baseUrl(serverUrl)
-                .build();
+                .build());
+    }
+
+    UserClient(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     public List<UserDto> getAllUsers() {
@@ -58,7 +62,10 @@ public class UserClient {
     }
 
     public UserDto createUser(UserDto userDto) {
-        log.info("Запрос на создание пользователя с email {} на сервер", userDto.getEmail());
+        log.info(
+                "Запрос на создание пользователя с email {} на сервер",
+                userDto.getEmail()
+        );
 
         return restClient.post()
                 .uri("/users")
@@ -67,8 +74,14 @@ public class UserClient {
                 .body(UserDto.class);
     }
 
-    public UserDto updateUser(long userId, UserDto userDto) {
-        log.info("Запрос на обновление пользователя с id {} на сервер", userId);
+    public UserDto updateUser(
+            long userId,
+            UserDto userDto) {
+
+        log.info(
+                "Запрос на обновление пользователя с id {} на сервер",
+                userId
+        );
 
         return restClient.patch()
                 .uri("/users/{userId}", userId)
@@ -78,7 +91,10 @@ public class UserClient {
     }
 
     public void deleteUser(long userId) {
-        log.info("Запрос на удаление пользователя с id {} на сервер", userId);
+        log.info(
+                "Запрос на удаление пользователя с id {} на сервер",
+                userId
+        );
 
         restClient.delete()
                 .uri("/users/{userId}", userId)

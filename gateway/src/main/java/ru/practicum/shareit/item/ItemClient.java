@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import ru.practicum.shareit.item.dto.ItemDto;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -15,13 +16,20 @@ public class ItemClient {
     private final RestClient restClient;
 
     public ItemClient(@Value("${server.url}") String serverUrl) {
-        this.restClient = RestClient.builder()
+        this(RestClient.builder()
                 .baseUrl(serverUrl)
-                .build();
+                .build());
+    }
+
+    ItemClient(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     public ItemDto addItem(long userId, ItemDto itemDto) {
-        log.info("Запрос на создание вещи пользователем с id {}", userId);
+        log.info(
+                "Запрос на создание вещи пользователем с id {}",
+                userId
+        );
 
         return restClient.post()
                 .uri("/items")
@@ -32,13 +40,20 @@ public class ItemClient {
     }
 
     public ItemDto getItem(Long userId, long itemId) {
-        log.info("Запрос вещи с id {} на сервер пользователем с id {}", itemId, userId);
+        log.info(
+                "Запрос вещи с id {} на сервер пользователем с id {}",
+                itemId,
+                userId
+        );
 
         RestClient.RequestHeadersSpec<?> request = restClient.get()
                 .uri("/items/{itemId}", itemId);
 
         if (userId != null) {
-            request.header("X-Sharer-User-Id", String.valueOf(userId));
+            request.header(
+                    "X-Sharer-User-Id",
+                    String.valueOf(userId)
+            );
         }
 
         return request
@@ -47,7 +62,10 @@ public class ItemClient {
     }
 
     public List<ItemDto> getItems(long userId) {
-        log.info("Запрос списка вещей пользователя с id {} на сервер", userId);
+        log.info(
+                "Запрос списка вещей пользователя с id {} на сервер",
+                userId
+        );
 
         ItemDto[] items = restClient.get()
                 .uri("/items")
@@ -58,8 +76,16 @@ public class ItemClient {
         return items == null ? List.of() : Arrays.asList(items);
     }
 
-    public ItemDto updateItem(long userId, long itemId, ItemDto itemDto) {
-        log.info("Запрос на обновление вещи с id {} пользователем с id {}", itemId, userId);
+    public ItemDto updateItem(
+            long userId,
+            long itemId,
+            ItemDto itemDto
+    ) {
+        log.info(
+                "Запрос на обновление вещи с id {} пользователем с id {}",
+                itemId,
+                userId
+        );
 
         return restClient.patch()
                 .uri("/items/{itemId}", itemId)
@@ -70,7 +96,10 @@ public class ItemClient {
     }
 
     public List<ItemDto> searchItems(String text) {
-        log.info("Запрос поиска вещей по тексту: {}", text);
+        log.info(
+                "Запрос поиска вещей по тексту: {}",
+                text
+        );
 
         ItemDto[] items = restClient.get()
                 .uri(uriBuilder -> uriBuilder

@@ -16,9 +16,13 @@ public class CommentClient {
     private final RestClient restClient;
 
     public CommentClient(@Value("${server.url}") String serverUrl) {
-        this.restClient = RestClient.builder()
+        this(RestClient.builder()
                 .baseUrl(serverUrl)
-                .build();
+                .build());
+    }
+
+    CommentClient(RestClient restClient) {
+        this.restClient = restClient;
     }
 
     public CommentDto addComment(

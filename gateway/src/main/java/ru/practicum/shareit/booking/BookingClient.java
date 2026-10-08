@@ -17,13 +17,23 @@ public class BookingClient {
     private final RestClient restClient;
 
     public BookingClient(@Value("${server.url}") String serverUrl) {
-        this.restClient = RestClient.builder()
+        this(RestClient.builder()
                 .baseUrl(serverUrl)
-                .build();
+                .build());
     }
 
-    public BookingResponseDto createBooking(long userId, BookingDto bookingDto) {
-        log.info("Создание бронирования пользователем с id {}", userId);
+    BookingClient(RestClient restClient) {
+        this.restClient = restClient;
+    }
+
+    public BookingResponseDto createBooking(
+            long userId,
+            BookingDto bookingDto) {
+
+        log.info(
+                "Создание бронирования пользователем с id {}",
+                userId
+        );
 
         return restClient.post()
                 .uri("/bookings")
@@ -54,7 +64,10 @@ public class BookingClient {
                 .body(BookingResponseDto.class);
     }
 
-    public BookingResponseDto getBooking(long userId, long bookingId) {
+    public BookingResponseDto getBooking(
+            long userId,
+            long bookingId) {
+
         log.info(
                 "Получение бронирования {} пользователем {}",
                 bookingId,
@@ -72,6 +85,12 @@ public class BookingClient {
             long userId,
             BookingQueryState state) {
 
+        log.info(
+                "Получение бронирований пользователя {} со статусом {}",
+                userId,
+                state
+        );
+
         BookingResponseDto[] bookings = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/bookings")
@@ -87,6 +106,12 @@ public class BookingClient {
     public List<BookingResponseDto> getOwnerBookings(
             long userId,
             BookingQueryState state) {
+
+        log.info(
+                "Получение бронирований владельца {} со статусом {}",
+                userId,
+                state
+        );
 
         BookingResponseDto[] bookings = restClient.get()
                 .uri(uriBuilder -> uriBuilder
