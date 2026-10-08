@@ -1,5 +1,6 @@
 package ru.practicum.shareit.itemrequest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +24,9 @@ class ItemRequestControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private ItemRequestClient itemRequestClient;
 
@@ -31,14 +35,13 @@ class ItemRequestControllerTest {
         when(itemRequestClient.createRequest(eq(1L), any(ItemRequestDto.class)))
                 .thenReturn(null);
 
+        ItemRequestDto requestDto = new ItemRequestDto();
+        requestDto.setDescription("Нужна дрель");
+
         mockMvc.perform(post("/requests")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "description": "Нужна дрель"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk());
     }
 

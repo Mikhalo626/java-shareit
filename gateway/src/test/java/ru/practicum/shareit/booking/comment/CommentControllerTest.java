@@ -1,5 +1,6 @@
 package ru.practicum.shareit.comment;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +24,9 @@ class CommentControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private CommentClient commentClient;
 
@@ -31,27 +35,25 @@ class CommentControllerTest {
         when(commentClient.addComment(eq(1L), eq(1L), any(CommentDto.class)))
                 .thenReturn(null);
 
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("Отличная вещь!");
+
         mockMvc.perform(post("/items/1/comment")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "text": "Отличная вещь!"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(commentDto)))
                 .andExpect(status().isOk());
     }
 
     @Test
     void addComment_shouldReturnBadRequestWhenTextIsBlank() throws Exception {
+        CommentDto commentDto = new CommentDto();
+        commentDto.setText("");
+
         mockMvc.perform(post("/items/1/comment")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "text": ""
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(commentDto)))
                 .andExpect(status().isBadRequest());
     }
 

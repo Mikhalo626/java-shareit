@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -8,13 +9,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.dto.BookingDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +25,9 @@ class BookingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private BookingClient bookingClient;
@@ -54,16 +59,15 @@ class BookingControllerTest {
         when(bookingClient.createBooking(eq(1L), any(BookingDto.class)))
                 .thenReturn(null);
 
+        BookingDto bookingDto = new BookingDto();
+        bookingDto.setItemId(1L);
+        bookingDto.setStart(LocalDateTime.of(2030, 1, 1, 10, 0));
+        bookingDto.setEnd(LocalDateTime.of(2030, 1, 2, 10, 0));
+
         mockMvc.perform(post("/bookings")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "itemId": 1,
-                                  "start": "2030-01-01T10:00:00",
-                                  "end": "2030-01-02T10:00:00"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(bookingDto)))
                 .andExpect(status().isOk());
     }
 

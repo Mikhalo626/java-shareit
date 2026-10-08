@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,6 +25,9 @@ class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private UserClient userClient;
@@ -51,14 +55,13 @@ class UserControllerTest {
         when(userClient.createUser(any(UserDto.class)))
                 .thenReturn(null);
 
+        UserDto userDto = new UserDto();
+        userDto.setName("Иван");
+        userDto.setEmail("ivan@example.com");
+
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Иван",
-                                  "email": "ivan@example.com"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isOk());
     }
 
@@ -67,14 +70,13 @@ class UserControllerTest {
         when(userClient.updateUser(eq(1L), any(UserDto.class)))
                 .thenReturn(null);
 
+        UserDto userDto = new UserDto();
+        userDto.setName("Пётр");
+        userDto.setEmail("petr@example.com");
+
         mockMvc.perform(patch("/users/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Пётр",
-                                  "email": "petr@example.com"
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(userDto)))
                 .andExpect(status().isOk());
     }
 

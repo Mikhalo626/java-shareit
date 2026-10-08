@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -24,6 +25,9 @@ class ItemControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private ItemClient itemClient;
 
@@ -32,16 +36,15 @@ class ItemControllerTest {
         when(itemClient.addItem(eq(1L), any(ItemDto.class)))
                 .thenReturn(null);
 
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Дрель");
+        itemDto.setDescription("Электрическая дрель");
+        itemDto.setAvailable(true);
+
         mockMvc.perform(post("/items")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Дрель",
-                                  "description": "Электрическая дрель",
-                                  "available": true
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(itemDto)))
                 .andExpect(status().isOk());
     }
 
@@ -70,16 +73,15 @@ class ItemControllerTest {
         when(itemClient.updateItem(eq(1L), eq(1L), any(ItemDto.class)))
                 .thenReturn(null);
 
+        ItemDto itemDto = new ItemDto();
+        itemDto.setName("Новая дрель");
+        itemDto.setDescription("Обновлённое описание");
+        itemDto.setAvailable(true);
+
         mockMvc.perform(patch("/items/1")
                         .header("X-Sharer-User-Id", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "name": "Новая дрель",
-                                  "description": "Обновлённое описание",
-                                  "available": true
-                                }
-                                """))
+                        .content(objectMapper.writeValueAsString(itemDto)))
                 .andExpect(status().isOk());
     }
 
